@@ -2,6 +2,9 @@ from django.shortcuts import render
 import requests
 from rest_framework.views import APIView
 from django.http import JsonResponse
+from wallets.models import Wallet
+from wallets.serializers import WalletSerializer
+from rest_framework.response import Response
 
 # Create your views here.
 class ChartView(APIView):
@@ -33,3 +36,13 @@ class PriceView(APIView):
             return JsonResponse(data)
         else:
             return JsonResponse({'error': 'No se pudieron obtener los datos'})
+
+class WalletView(APIView):
+    queryset = Wallet.objects
+    serializer_class = WalletSerializer
+    def get(self, request):
+        current_user = request.user
+        wallet_instance = Wallet.objects.get(user=current_user)
+        serializer = WalletSerializer(wallet_instance)
+        print(serializer)
+        return Response(serializer.data)
