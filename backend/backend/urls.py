@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainSlidingView
 from accounts.views import ProfileView
-from wallets.views import ChartView,PriceView,WalletView
+from wallets.views import ChartView,PriceView,WalletView,BuyView,SellView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,6 +25,8 @@ urlpatterns = [
     path('profile', ProfileView.as_view(), name='profile'),
     path('chart', ChartView.as_view(), name='chart'),
     path('price', PriceView.as_view(), name='price'),
-    path('wallet', WalletView.as_view(), name='wallet')
+    path('wallet', WalletView.as_view(), name='wallet'),
+    path('buy/<str:qty>', BuyView.as_view(), name='buy'),
+    path('sell/<str:qty>', SellView.as_view(), name='sell')
 
 ]

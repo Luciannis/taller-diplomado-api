@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from wallets.models import Wallet
 from wallets.serializers import WalletSerializer
 from rest_framework.response import Response
+from decimal import Decimal
 
 # Create your views here.
 class ChartView(APIView):
@@ -46,3 +47,37 @@ class WalletView(APIView):
         serializer = WalletSerializer(wallet_instance)
         print(serializer)
         return Response(serializer.data)
+
+class BuyView(APIView):
+    def post(self, request, qty):
+        qty = Decimal(str(qty))
+        # qty = float(qty) # Pasamos <str:qty> a float
+        price_response = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=clp")
+        price = price_response.json()["bitcoin"]["clp"]
+        user_wallet = request.user.wallet
+        if user_wallet.balance_clp >= qty*price: # Tiene suficiente plata para comprar?
+            user_wallet.balance_btc += qty # compra qty BTC
+            user_wallet.balance_clp -= qty*price # a cambio pierde qty*price CLP
+            user_wallet.save() # guardamos
+            serializer = WalletSerializer(user_wallet)
+            return Response(serializer.data)
+        else:
+            return Response(status=400) # Bad Request: no tiene suficiente plata
+
+class SellView(APIView):
+    def post(self, request, qty):
+        print("la cantidad es :" ,qty)
+        qty = Decimal(str(qty))
+        # qty = float(qty) # Pasamos <str:qty> a float
+        price_response = requests.get("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=clp")
+        price = price_response.json()["bitcoin"]["clp"]
+        user_wallet = request.user.wallet
+
+        if user_wallet.balance_btc > 0: # Tiene suficientes bitcoins para vender?
+            user_wallet.balance_clp += qty*price # gana CLP qty*price
+            user_wallet.balance_btc -= qty # vende qty BTC
+            user_wallet.save() # guardamos
+            serializer = WalletSerializer(user_wallet)
+            return Response(serializer.data)
+        else:
+            return Response(status=400) # Bad Request: no tiene suficiente plata
